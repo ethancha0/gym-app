@@ -66,3 +66,42 @@ export function routinesWithExercisesQuery() {
     },
   });
 }
+
+export async function renameRoutine(routineId: number, name: string) {
+  await db.update(routines).set({ name }).where(eq(routines.id, routineId));
+}
+
+export async function updateRoutineExercise(
+  id: number,
+  patch: Partial<
+    Pick<typeof routineExercises.$inferInsert, 'targetSets' | 'repMin' | 'repMax' | 'restSeconds'>
+  >,
+) {
+  await db.update(routineExercises).set(patch).where(eq(routineExercises.id, id));
+}
+
+export async function removeRoutineExercise(id: number) {
+  await db.delete(routineExercises).where(eq(routineExercises.id, id));
+}
+
+/** Swaps an exercise with its neighbor above (-1) or below (+1). */
+export async function moveRoutineExercise(id: number, direction: -1 | 1) {
+  const [current] = await db.select().from(routineExercises).where(eq(routineExercises.id, id));
+  if (!current) return;
+  const siblings = await db
+    .select()
+    .from(routineExercises)
+    .where(eq(routineExercises.routineId, current.routineId))
+    .orderBy(asc(routineExercises.position));
+  const index = siblings.findIndex((s) => s.id === id);
+  const neighbor = siblings[index + direction];
+  if (!neighbor) return;
+  await db
+    .update(routineExercises)
+    .set({ position: neighbor.position })
+    .where(eq(routineExercises.id, current.id));
+  await db
+    .update(routineExercises)
+    .set({ position: current.position })
+    .where(eq(routineExercises.id, neighbor.id));
+}

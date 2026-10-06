@@ -8,7 +8,9 @@
     "scheme": "gymapp",
     "userInterfaceStyle": "dark",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "usesAppleSignIn": true,
+      "bundleIdentifier": "com.ethanchao.gym-app"
     },
     "android": {
       "adaptiveIcon": {
@@ -38,6 +40,19 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "81fd32f9-76b8-47c0-a8cd-853e7768b3cf"
+      }
+    },
+    "owner": "ethanchao",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/81fd32f9-76b8-47c0-a8cd-853e7768b3cf"
     }
   }
 }

@@ -99,3 +99,41 @@ One section per milestone: decisions, React Native concepts, and open questions.
 ### Open questions
 
 - _(add any from testing)_
+
+---
+
+## Milestone 3 — Core logging MVP (+ Sign in with Apple)
+
+### Decisions
+
+- **Pace change:** Ethan asked for a working MVP fast; explanations moved to the end-of-milestone recap.
+- **Sign in with Apple added** (not in the original handoff). Local only: the account is a row in SQLite (`users`), no server. In Expo Go the Apple user ID belongs to Expo Go and will change with our own build (Milestone 10; needs a paid Apple Developer account). Its real future use is authenticating requests to the AI proxy (Milestone 8). A `__DEV__`-only "Continue as Developer" button covers simulators without an Apple ID.
+- **Sign-out keeps the user row** (`signed_in = false`) because Apple only sends name/email on the very first sign-in.
+- **Crash recovery = write-through (option A).** Starting a workout creates its row (`finished_at` NULL); every check-off, added/removed set and finished field edit is saved immediately. On launch, an unfinished workout reopens automatically. Alternative (B): keep it in a persisted store until Finish (two sources of truth).
+- **Zustand store = working copy, SQLite = truth.** Typing updates only the store; values are saved on `onEndEditing` and on check-off. Rows subscribe with selectors so one cell's typing re-renders one row.
+- **Finish drops unchecked sets**; a workout with nothing checked is discarded. Checking an empty set fills it from the Previous column.
+- **Active workout uses a plain ScrollView** (≈30 rows, contains TextInputs, which don't mix well with recycling). **FlashList v2** for History and the exercise picker (unbounded lists).
+- **Keyboard with built-ins:** `automaticallyAdjustKeyboardInsets`, `keyboardDismissMode="interactive"`, `keyboardShouldPersistTaps="handled"`, and an `InputAccessoryView` "Done" bar for the number pads (they have no Return key).
+- **Routine reordering with ↑/↓ buttons**; drag-and-drop is deferred to Milestone 10 polish.
+- **History layout:** month sections, rows "date · duration · sets · volume", read-only detail screen.
+- **Migration incident:** `0001` was regenerated after Ethan's running Metro server had already applied the first version on the simulator, so `CREATE TABLE users` ran twice and failed. Fix: restore the original `0001` (its journal `when` set back to the applied timestamp) and add `0002` (`ALTER TABLE users ADD signed_in`). Lesson: once any device may have run a migration, only add new ones.
+
+### React Native concepts
+
+- **Protected routes:** `Stack.Protected guard={...}` makes screens exist only while the guard is true; flipping it (via a live query on `users`) swaps sign-in ↔ app with no manual navigation. `index` must be inside the guard too. — `src/app/_layout.tsx`
+- **Native platform UI:** `AppleAuthenticationButton` (Apple-drawn), `Alert.alert`, `ActionSheetIOS`, haptics via `expo-haptics`. — `sign-in.tsx`, `workout.tsx`, `set-row.tsx`
+- **Modal vs. stack:** the workout is a `fullScreenModal` on the root stack (covers tabs, swipe-to-dismiss off); routine editor and workout detail push inside their tab's stack; the exercise picker is a sheet. — `_layout.tsx`, `(tabs)/*/_layout.tsx`
+- **Dynamic routes and params:** `[id].tsx` reads `useLocalSearchParams()`; routes can't take callback props, so the picker gets `?target=routine&routineId=3`. — `routines/[id].tsx`, `exercise-picker.tsx`
+- **Configuring headers from a screen:** `<Stack.Screen options={...} />` inside a screen sets its own header (timer, Finish, Options). — `workout.tsx`
+- **Timestamp-based timers:** compute `now − startedAt` each tick; JS timers pause in the background. — `elapsed-time.tsx`
+- **Zustand selectors and `useShallow`:** a selector returning a new array/object each time must use `useShallow`, or it re-renders on every store change. — `workout.tsx`
+- **Controlled vs. uncontrolled inputs:** set rows are controlled (value from the store); routine editor fields are uncontrolled (`defaultValue` + `onEndEditing`). — `set-row.tsx`, `routines/[id].tsx`
+- **Keyboard handling on iOS** (see Decisions). — `workout.tsx`
+- **FlashList recycling and `getItemType`:** mixed headers/rows recycle only into their own type. — `(tabs)/history/index.tsx`
+- **Module-level flags** run something once per app launch regardless of remounts. — `(tabs)/_layout.tsx`
+- **Aggregate SQL:** History totals use `GROUP BY` with `count`/`sum` in SQLite rather than loading every set. — `repositories/workouts.ts`
+
+### Open questions
+
+- Apple sign-in hasn't been tried on a real iPhone yet (the simulator reports it unavailable).
+- Metro logged "Unable to get the view config for default view from module ExpoAppleAuthentication" on the simulator; confirm the Apple button renders on the phone.

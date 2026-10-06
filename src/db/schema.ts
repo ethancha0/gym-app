@@ -26,6 +26,18 @@ const createdAt = () =>
     .notNull()
     .$defaultFn(() => new Date());
 
+// Apple accounts that have signed in on this device. Apple only sends the
+// name and email the very first time someone signs in, so signing out just
+// clears `signed_in` instead of deleting the row.
+export const users = sqliteTable('users', {
+  // Apple's stable user identifier for this app.
+  appleUserId: text('apple_user_id').primaryKey(),
+  email: text('email'),
+  fullName: text('full_name'),
+  signedIn: integer('signed_in', { mode: 'boolean' }).notNull().default(true),
+  createdAt: createdAt(),
+});
+
 export const exercises = sqliteTable('exercises', {
   id: id(),
   // Stable text key (e.g. 'barbell-bench-press'). Lets the seed run safely
@@ -143,6 +155,7 @@ export const setsRelations = relations(sets, ({ one }) => ({
 }));
 
 // Row types inferred from the tables, for use across the app.
+export type User = typeof users.$inferSelect;
 export type Exercise = typeof exercises.$inferSelect;
 export type Routine = typeof routines.$inferSelect;
 export type RoutineExercise = typeof routineExercises.$inferSelect;

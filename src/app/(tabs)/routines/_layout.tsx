@@ -8,6 +8,7 @@ export default function RoutinesLayout() {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ title: 'Routines', ...largeTitleOptions }} />
+      <Stack.Screen name="[id]" options={{ title: 'Edit Routine' }} />
     </Stack>
   );
 }

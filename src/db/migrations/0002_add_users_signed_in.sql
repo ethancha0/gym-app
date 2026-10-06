@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `signed_in` integer DEFAULT true NOT NULL;

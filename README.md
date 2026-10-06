@@ -1,5 +1,24 @@
 # Welcome to your Expo app 👋
 
+## Open on your phone (no laptop needed)
+
+Scan with the iPhone Camera app. It opens the latest published version in [Expo Go](https://expo.dev/go):
+
+<img src="https://qr.expo.dev/eas-update?projectId=81fd32f9-76b8-47c0-a8cd-853e7768b3cf&runtimeVersion=exposdk%3A57.0.0&channel=preview" alt="QR code for the latest preview in Expo Go" width="220" />
+
+Or open this link on the phone: `exp://u.expo.dev/81fd32f9-76b8-47c0-a8cd-853e7768b3cf?runtime-version=exposdk%3A57.0.0&channel-name=preview`
+
+This QR code never changes. To ship new code to it, run:
+
+```bash
+npm run publish
+```
+
+This bundles the JavaScript and uploads it to EAS Update (`preview` channel). Expo Go picks it up the next time the app is opened with a connection; otherwise it runs the copy it already downloaded. Two limits:
+
+- Only libraries bundled in Expo Go work. The `runtimeVersion` policy in `app.json` is `sdkVersion` (`exposdk:57.0.0`), the runtime Expo Go accepts.
+- After upgrading the Expo SDK, the QR code's `runtimeVersion` changes to match (e.g. `exposdk%3A58.0.0`).
+
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
 ## Get started
