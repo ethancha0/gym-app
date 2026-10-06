@@ -29,3 +29,40 @@ One section per milestone: decisions, React Native concepts, and open questions.
 ### Open questions
 
 - _(none yet)_
+
+---
+
+## Milestone 1 — Design system
+
+### Decisions
+
+- **NativeWind v4.2.7 (Tailwind 3) + react-native-reusables, chosen by Ethan over a StyleSheet kit or Tamagui.** Familiar Tailwind classes, and reusables gives copy-in components we own. Not v5: its docs call it a pre-release "not intended for production use", and reusables doesn't support it. Cost: a build-time layer between our code and RN styles, so config changes need `npx expo start -c`.
+- **One color vocabulary (ours), no shadcn aliases.** Reusables uses shadcn names (`primary`, `muted-foreground`); mapping them onto our tokens would give every color two names, and shadcn's `accent` (gray hover) clashes with ours (lavender). Reusables components are rewritten to our classes when added. Text colors use iOS names (`text-label`, `text-label-secondary`) to avoid `text-text-primary`.
+- **Tokens in one CommonJS file (`src/theme/tokens.js`).** tailwind.config.js `require`s it in Node; TS imports it for places that need raw colors (nav theme, native Switch). Alternative: duplicate values in two places (they'd drift).
+- **tailwind-merge pinned to v2.6 and extended with our font sizes.** v3 targets Tailwind 4. Unextended, it treats `text-headline` (size) and `text-label` (color) as conflicting and silently drops one. Covered by `src/lib/utils.test.ts`.
+- **Native tab bar (`NativeTabs`) over JS tabs.** Real UITabBar (SF Symbols, Liquid Glass on iOS 26). Tradeoff: still under `expo-router/unstable-native-tabs` in SDK 57, so the API may change on upgrade.
+- **A Stack inside each tab** for native large titles and in-tab pushes (Routines → editor, Progress → exercise detail).
+- **Header colors come only from the navigation theme.** Setting `headerStyle`/`headerTintColor`/`header*TitleStyle` per screen made the large title disappear on iOS 26; the theme (`text`, `card`, `primary`) already does the job.
+- **Native controls where iOS has them:** RN's built-in `Switch` (real UISwitch) instead of reusables' JS switch; `@expo/ui` SwiftUI `Picker` for the segmented control; an Expo Router **formSheet route** for bottom sheets (native grabber, detents, swipe-to-dismiss) instead of `@gorhom/bottom-sheet`. Tradeoff for the sheet: it's a route, so data goes in via params or a store, not props.
+- **Kept reusables' `TextClassContext` pattern** so `<Button>` can style the `<AppText>` inside it. Renamed Text → `AppText` so a stray `Text` import from `react-native` (black by default, invisible on our background) is easy to spot.
+
+### React Native concepts
+
+- **No CSS cascade:** a `<Text>` inside a `<View>` never inherits color/font from the View (nested Text inside Text does). Workaround: React context. — `src/components/ui/text.tsx` (`TextClassContext`)
+- **All styling is JS objects on `style`:** NativeWind compiles classNames into those objects at build time via Babel (`jsxImportSource`) and Metro (`withNativeWind`). — `babel.config.js`, `metro.config.js`
+- **Config files load once at Metro startup:** Fast Refresh only re-sends JS modules; Babel/Metro/Tailwind config changes need a restart with `-c` (clear cache).
+- **Props vs. styles for native components:** some colors are props, not styles (`SymbolView.tintColor`, `TextInput.placeholderTextColor`, `Switch.trackColor`). `cssInterop` can map a className's color onto a prop. — `src/components/ui/icon.tsx`
+- **Dynamic values go in `style`, not className:** classNames must exist at build time; a computed width like `${pct}%` goes in `style`. — `src/components/ui/progress-bar.tsx`
+- **Pressable + `active:`:** touch feedback comes from Pressable's pressed state (no `:hover` on touch). `hitSlop` enlarges the touch area without changing layout (44pt rule). — `button.tsx`, `chip.tsx`, `check-circle.tsx`
+- **Safe areas via the native header:** `contentInsetAdjustmentBehavior="automatic"` lets iOS inset scroll content below the header and above the tab bar, and lets large titles collapse. — `src/components/screen.tsx`
+- **File-based routing needs a file for every URL:** the app launches at `/`, so `src/app/index.tsx` redirects to `/today`. Route groups like `(tabs)` don't appear in the URL.
+- **`<Host>` is the RN ↔ SwiftUI boundary:** outside it Flexbox lays things out, inside it SwiftUI does. — `src/components/ui/segmented-control.tsx`
+- **Accessibility props:** `role`, `accessibilityLabel` (required on icon-only buttons), `accessibilityState` (checked/selected/disabled), `accessibilityValue` (progress). — `icon-button.tsx`, `check-circle.tsx`, `progress-bar.tsx`
+- **Dynamic Type:** RN `Text`/`TextInput` scale with the system text size by default; `maxFontSizeMultiplier` caps it where space is tight. — `number-field.tsx`
+- **San Francisco already uses tabular (equal-width) digits by default;** `tabular-nums` documents intent and protects against other fonts.
+- **`__DEV__`** is true only in development; dev-only UI (the gallery link) is stripped from release builds. — `src/app/settings.tsx`
+
+### Open questions
+
+- Expo Go on the iPhone hung on "Opening project" while the simulator worked. Likely Local Network permission or campus Wi-Fi client isolation; `npx expo start --tunnel` is the fallback.
+- Revisit whether `NativeTabs` has moved out of `unstable-` on the next SDK upgrade.

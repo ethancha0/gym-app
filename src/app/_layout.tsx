@@ -5,7 +5,7 @@ import '@/global.css';
 import { Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
-import { navTheme } from '@/theme/navigation';
+import { navTheme, sheetOptions } from '@/theme/navigation';
 
 // Root stack: the tab bar is one screen; full-screen flows (active workout,
 // settings, the dev gallery) push on top of it and cover the tabs.
@@ -19,6 +19,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
         <Stack.Screen name="gallery" options={{ title: 'Component Gallery' }} />
+        <Stack.Screen name="gallery-sheet" options={sheetOptions} />
       </Stack>
     </ThemeProvider>
   );

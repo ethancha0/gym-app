@@ -1,4 +1,4 @@
-import { DarkTheme, type Theme } from 'expo-router';
+import { DarkTheme, type NativeStackNavigationOptions, type Theme } from 'expo-router';
 
 import { colors } from './tokens';
 
@@ -28,3 +28,16 @@ export const largeTitleOptions = {
   headerShadowVisible: false,
   headerLargeTitleShadowVisible: false,
 } as const;
+
+// Options for screens presented as an iOS bottom sheet (e.g. the
+// natural-language log sheet in Milestone 8). The sheet is a real route
+// shown by UIKit's sheet presentation, so it gets the native grabber,
+// swipe-to-dismiss, and half/full height snapping for free.
+export const sheetOptions: NativeStackNavigationOptions = {
+  presentation: 'formSheet',
+  headerShown: false,
+  sheetAllowedDetents: [0.5, 1],
+  sheetGrabberVisible: true,
+  sheetCornerRadius: 14,
+  contentStyle: { backgroundColor: colors.surface },
+};

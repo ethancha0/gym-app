@@ -1,18 +1,26 @@
+import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { Screen } from '@/components/screen';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { CheckCircle } from '@/components/ui/check-circle';
+import { Chip } from '@/components/ui/chip';
 import { GroupedList, ListRow } from '@/components/ui/grouped-list';
 import { Icon } from '@/components/ui/icon';
 import { IconButton } from '@/components/ui/icon-button';
+import { NumberField } from '@/components/ui/number-field';
+import { ProgressBar } from '@/components/ui/progress-bar';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Switch } from '@/components/ui/switch';
 import { AppText, type TextVariant } from '@/components/ui/text';
 
 // Dev-only screen that shows every component in every state, so we can check
 // the design system on a real phone (and at large Dynamic Type sizes).
 // Reached from Settings → Developer → Component Gallery.
+
+const METRICS = ['Est. 1RM', 'Volume', 'Best Set'] as const;
 
 const TYPE_SCALE: TextVariant[] = [
   'largeTitle',
@@ -37,6 +45,11 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 export default function GalleryScreen() {
   const [warmups, setWarmups] = useState(true);
   const [notes, setNotes] = useState(false);
+  const [metric, setMetric] = useState<(typeof METRICS)[number]>('Est. 1RM');
+  const [setDone, setSetDone] = useState(true);
+  const [weight, setWeight] = useState('190');
+  const [reps, setReps] = useState('');
+  const [plates, setPlates] = useState(false);
 
   return (
     <Screen contentContainerClassName="gap-8">
@@ -139,6 +152,69 @@ export default function GalleryScreen() {
             trailing={<Switch value={notes} onValueChange={setNotes} accessibilityLabel="Notes" />}
           />
         </GroupedList>
+      </Section>
+      <Section title="Set row pieces">
+        <View className="flex-row items-center gap-3 rounded-input bg-completed-row px-2 py-1">
+          <AppText variant="headline" numeric className="w-6 text-center">
+            1
+          </AppText>
+          <AppText tone="tertiary" numeric className="flex-1">
+            185 × 8
+          </AppText>
+          <NumberField
+            kind="weight"
+            value={weight}
+            onChangeText={setWeight}
+            accessibilityLabel="Weight"
+          />
+          <NumberField
+            kind="reps"
+            value={reps}
+            onChangeText={setReps}
+            placeholder="8"
+            accessibilityLabel="Reps"
+          />
+          <CheckCircle
+            checked={setDone}
+            onToggle={() => setSetDone((v) => !v)}
+            accessibilityLabel="Complete set 1"
+          />
+        </View>
+      </Section>
+
+      <Section title="Chips">
+        <View className="flex-row flex-wrap gap-2">
+          <Chip label="45 × 10" />
+          <Chip label="95 × 5" />
+          <Chip label="135 × 3" />
+          <Chip label="160 × 1" />
+        </View>
+        <View className="flex-row gap-2">
+          <Chip label="Show plates" selected={plates} onPress={() => setPlates((v) => !v)} />
+        </View>
+      </Section>
+
+      <Section title="Progress">
+        <ProgressBar value={84 / 120} />
+        <ProgressBar value={0.35} tone="warning" />
+      </Section>
+
+      <Section title="Segmented control">
+        <SegmentedControl
+          options={METRICS}
+          value={metric}
+          onChange={setMetric}
+          accessibilityLabel="Chart metric"
+        />
+        <AppText variant="subheadline" tone="secondary">
+          Selected: {metric}
+        </AppText>
+      </Section>
+
+      <Section title="Bottom sheet">
+        <Button variant="secondary" onPress={() => router.push('/gallery-sheet')}>
+          <AppText>Open sheet</AppText>
+        </Button>
       </Section>
     </Screen>
   );
