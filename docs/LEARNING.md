@@ -66,3 +66,36 @@ One section per milestone: decisions, React Native concepts, and open questions.
 
 - Expo Go on the iPhone hung on "Opening project" while the simulator worked. Likely Local Network permission or campus Wi-Fi client isolation; `npx expo start --tunnel` is the fallback.
 - Revisit whether `NativeTabs` has moved out of `unstable-` on the next SDK upgrade.
+
+---
+
+## Milestone 2 — Data layer
+
+### Decisions
+
+- **expo-sqlite + Drizzle ORM 0.45.3 (stable), not the 1.0 RC the Drizzle docs now point to.** Same reasoning as NativeWind v5: don't build on a release candidate. Drizzle stays close to SQL and gives typed queries. Alternatives: raw SQL strings (no types), WatermelonDB (heavier, sync-oriented).
+- **Weights stored exactly as entered, plus a `weight_unit` column ('lb' | 'kg').** Ethan lifts in lb with lb plates and 5 lb jumps, so 185 stays exactly 185 and progression math is exact; RepCount data imports as-is. Convert only for display in the other unit or when summing mixed units. Alternative: canonical kg REAL (one unit, but 185 lb = 83.9146… kg and every comparison needs rounding).
+- **Integer autoincrement IDs**, **timestamps as integer milliseconds** (Drizzle maps them to `Date`), **booleans as 0/1**, **muscle lists as JSON text**. SQLite has no date/boolean/array types.
+- **`slug` as each exercise's permanent identity.** The seed uses `INSERT … ON CONFLICT (slug) DO NOTHING`, so it runs safely on every launch and new seed entries appear after an app update. Milestone 7's CSV import can match on it.
+- **Foreign keys with explicit delete rules:** routine → routine_exercises CASCADE, workout → sets CASCADE, routine → workouts SET NULL (history survives), exercise → anything RESTRICT.
+- **Indexes** on `routine_exercises(routine_id, position)`, `sets(workout_id)`, `sets(exercise_id, completed_at)` for the Previous column, PRs and charts.
+- **`coach_reports` and `suggestions` deferred to Milestone 9**, so we'll write a second migration against a database with real data.
+- **Database prep runs outside React** (`prepareDatabase()`), and a gate component keeps the splash screen up until it finishes. The first version set state directly inside an effect, which the `react-hooks/set-state-in-effect` lint rule rejects (it causes an extra render); state is now set only in the promise callbacks.
+- **Repository "...Query" functions return unexecuted queries** so the same function works with `await` (run once) and `useLiveQuery` (re-run on change).
+
+### React Native concepts
+
+- **Local-first:** the database on the phone is the source of truth; no server, works offline, instant reads. — `src/db/client.ts`
+- **The app sandbox:** `gym.db` lives in the app's private `Documents/SQLite/` folder; it survives restarts and updates and is deleted on uninstall.
+- **Synchronous open, async queries:** `openDatabaseSync` makes `db` usable at import time; queries are awaited so they don't block rendering.
+- **PRAGMAs are per connection:** WAL mode (faster concurrent reads) and `foreign_keys = ON` (otherwise SQLite ignores CASCADE/RESTRICT) run on every launch. — `src/db/client.ts`
+- **Migrations at startup:** Drizzle records applied migrations in `__drizzle_migrations` and runs only new ones. Never edit a migration a device has already run; add a new one with `npm run db:generate -- <name>`. — `src/db/prepare.ts`, `src/db/migrations/`
+- **Bundling non-JS files:** the app can't read project files at runtime, so `.sql` migrations are inlined into the JS bundle (`babel-plugin-inline-import` + Metro `sourceExts`). — `babel.config.js`, `metro.config.js`
+- **Live queries:** `enableChangeListener` + `useLiveQuery` re-run a query when its tables change, so screens update after writes with no manual refresh. — `src/app/dev-db.tsx`
+- **Virtualized lists can't nest in a ScrollView:** FlatList renders only nearby rows; inside a ScrollView it would render everything (RN warns). Put other content in `ListHeaderComponent`. — `src/app/dev-db.tsx`
+- **Native splash screen control:** `preventAutoHideAsync` / `hideAsync` keep the splash up during startup work. — `src/db/database-gate.tsx`
+- **Drizzle → SQL:** `db.select().from(exercises).orderBy(asc(exercises.name))` is `SELECT * FROM exercises ORDER BY name ASC`; `db.query.routines.findMany({ with: … })` is Drizzle's relational API, which builds the JOINs from `relations` in `schema.ts`.
+
+### Open questions
+
+- _(add any from testing)_

@@ -5,6 +5,7 @@ import '@/global.css';
 import { Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
+import { DatabaseGate } from '@/db/database-gate';
 import { navTheme, sheetOptions } from '@/theme/navigation';
 
 // Root stack: the tab bar is one screen; full-screen flows (active workout,
@@ -13,14 +14,18 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={navTheme}>
       <StatusBar style="light" />
-      {/* "minimal" = just the back chevron, no previous-screen title (the tab
+      {/* No screen renders until the database is migrated and seeded. */}
+      <DatabaseGate>
+        {/* "minimal" = just the back chevron, no previous-screen title (the tab
           group's route would otherwise show up as "(tabs)"). */}
-      <Stack screenOptions={{ headerBackButtonDisplayMode: 'minimal' }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="settings" options={{ title: 'Settings' }} />
-        <Stack.Screen name="gallery" options={{ title: 'Component Gallery' }} />
-        <Stack.Screen name="gallery-sheet" options={sheetOptions} />
-      </Stack>
+        <Stack screenOptions={{ headerBackButtonDisplayMode: 'minimal' }}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+          <Stack.Screen name="gallery" options={{ title: 'Component Gallery' }} />
+          <Stack.Screen name="gallery-sheet" options={sheetOptions} />
+          <Stack.Screen name="dev-db" options={{ title: 'Database' }} />
+        </Stack>
+      </DatabaseGate>
     </ThemeProvider>
   );
 }

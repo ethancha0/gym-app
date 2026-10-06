@@ -14,6 +14,7 @@ export default function SettingsScreen() {
       {__DEV__ ? (
         <GroupedList header="Developer">
           <ListRow title="Component Gallery" chevron onPress={() => router.push('/gallery')} />
+          <ListRow title="Database" chevron onPress={() => router.push('/dev-db')} />
         </GroupedList>
       ) : null}
     </Screen>
