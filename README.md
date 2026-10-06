@@ -8,13 +8,13 @@ Scan with the iPhone Camera app. It opens the latest published version in [Expo 
 
 Or open this link on the phone: `exp://u.expo.dev/81fd32f9-76b8-47c0-a8cd-853e7768b3cf?runtime-version=exposdk%3A57.0.0&channel-name=preview`
 
-This QR code never changes. To ship new code to it, run:
+This QR code never changes. Pushing to `main` ships new code to it: the [EAS Update workflow](.github/workflows/eas-update.yml) lints, typechecks and tests, then bundles the JavaScript and uploads it to EAS Update (`preview` channel). Pushes that only touch Markdown or `docs/` are skipped. To publish from your laptop without pushing:
 
 ```bash
 npm run publish
 ```
 
-This bundles the JavaScript and uploads it to EAS Update (`preview` channel). Expo Go picks it up the next time the app is opened with a connection; otherwise it runs the copy it already downloaded. Two limits:
+Expo Go picks up a new version the next time the app is opened with a connection; otherwise it runs the copy it already downloaded. Two limits:
 
 - Only libraries bundled in Expo Go work. The `runtimeVersion` policy in `app.json` is `sdkVersion` (`exposdk:57.0.0`), the runtime Expo Go accepts.
 - After upgrading the Expo SDK, the QR code's `runtimeVersion` changes to match (e.g. `exposdk%3A58.0.0`).

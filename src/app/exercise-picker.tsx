@@ -6,6 +6,7 @@ import { Pressable, TextInput, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { AppText } from '@/components/ui/text';
+import { CreateExerciseForm } from '@/components/workout/create-exercise-form';
 import { exercisesQuery } from '@/db/repositories/exercises';
 import { addExerciseToRoutine } from '@/db/repositories/routines';
 import { colors } from '@/theme/tokens';
@@ -21,6 +22,9 @@ export default function ExercisePicker() {
   const addToWorkout = useActiveWorkout((s) => s.addExercise);
   const { data: exercises } = useLiveQuery(exercisesQuery());
   const [search, setSearch] = useState('');
+  // The sheet swaps to the "New Exercise" form in place instead of opening
+  // a second sheet; a new exercise is added straight to the target.
+  const [creating, setCreating] = useState(false);
 
   const query = search.trim().toLowerCase();
   const filtered = query
@@ -38,6 +42,16 @@ export default function ExercisePicker() {
       await addToWorkout(exerciseId);
     }
     router.back();
+  }
+
+  if (creating) {
+    return (
+      <CreateExerciseForm
+        initialName={search.trim()}
+        onCancel={() => setCreating(false)}
+        onCreated={choose}
+      />
+    );
   }
 
   return (
@@ -77,6 +91,19 @@ export default function ExercisePicker() {
             </AppText>
           </Pressable>
         )}
+        // After the list (or alone, when nothing matches the search).
+        ListFooterComponent={
+          <Pressable
+            onPress={() => setCreating(true)}
+            role="button"
+            className="min-h-[52px] flex-row items-center gap-3 px-4 py-2 active:bg-surface-high"
+          >
+            <Icon name="plus.circle.fill" size={20} className="text-accent" />
+            <AppText tone="accent">
+              {query ? `Create “${search.trim()}”` : 'Create Exercise'}
+            </AppText>
+          </Pressable>
+        }
       />
     </View>
   );

@@ -61,10 +61,18 @@ export async function signOut() {
  * builds: the button that calls it is wrapped in `__DEV__`.
  */
 export async function signInAsDeveloper() {
-  await saveSignIn({ appleUserId: 'dev-user', email: null, fullName: 'Developer' });
+  await saveSignIn({ appleUserId: DEV_USER_ID, email: null, fullName: 'Developer' });
 }
 
 /** Free builds only: a local account in place of Sign in with Apple. */
 export async function signInOffline() {
-  await saveSignIn({ appleUserId: 'offline-user', email: null, fullName: null });
+  await saveSignIn({ appleUserId: OFFLINE_USER_ID, email: null, fullName: null });
+}
+
+const DEV_USER_ID = 'dev-user';
+const OFFLINE_USER_ID = 'offline-user';
+
+/** True for the stand-in accounts above, which aren't backed by an Apple ID. */
+export function isLocalAccount(appleUserId: string) {
+  return appleUserId === DEV_USER_ID || appleUserId === OFFLINE_USER_ID;
 }

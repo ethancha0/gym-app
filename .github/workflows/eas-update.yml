@@ -1,0 +1,59 @@
+# Publishes the app to EAS Update on every push to main, so the Expo Go QR
+# code in the README always runs what's on GitHub. Needs an EXPO_TOKEN repo
+# secret (expo.dev → Account settings → Access tokens).
+name: EAS Update
+
+on:
+  push:
+    branches: [main]
+    # Docs-only pushes don't change the app.
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+# A newer push cancels a publish still running for an older one.
+concurrency:
+  group: eas-update
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check for EXPO_TOKEN
+        run: |
+          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
+            echo "Add an EXPO_TOKEN secret to this repo: https://docs.expo.dev/eas-update/github-actions"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      # Don't ship a broken build to the phone.
+      - run: npx expo lint
+      - run: npx tsc --noEmit
+      - run: npm test -- --ci
+
+      - name: Publish update
+        # The commit message goes through an env var, not straight into the
+        # script, so quotes or backticks in it can't break the command.
+        env:
+          MESSAGE: ${{ github.event.head_commit.message || 'Manual publish' }}
+        run: >
+          eas update --channel preview --environment preview --platform ios
+          --message "$MESSAGE" --non-interactive

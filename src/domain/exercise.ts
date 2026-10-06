@@ -45,3 +45,21 @@ export type WeightUnit = (typeof WEIGHT_UNITS)[number];
 /** HANDOFF §5: double progression (default) or add reps only (isolation lifts). */
 export const PROGRESSION_RULES = ['double', 'reps_first'] as const;
 export type ProgressionRule = (typeof PROGRESSION_RULES)[number];
+
+/** 'front_delts' → 'Front delts': a display label for a muscle or equipment value. */
+export function labelFor(value: Muscle | Equipment): string {
+  const words = value.replaceAll('_', ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/**
+ * Slug for an exercise the user creates: "Cable Y-Raise" → "custom-cable-y-raise".
+ * The prefix keeps it from ever colliding with a seed slug added later.
+ */
+export function customExerciseSlug(name: string): string {
+  const kebab = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  return `custom-${kebab || 'exercise'}`;
+}
