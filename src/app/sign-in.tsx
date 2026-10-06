@@ -1,18 +1,14 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { useEffect, useState } from 'react';
 import { Alert, View } from 'react-native';
 
-import { isFreeBuild, signInAsDeveloper, signInOffline, signInWithApple } from '@/auth/apple';
+import { signInAsDeveloper, signInOffline, signInWithApple } from '@/auth/apple';
+import { useAppleSignInAvailable } from '@/auth/use-apple-sign-in-available';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { AppText } from '@/components/ui/text';
 
 export default function SignInScreen() {
-  const [available, setAvailable] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    AppleAuthentication.isAvailableAsync().then(setAvailable);
-  }, []);
+  const available = useAppleSignInAvailable();
 
   async function handlePress() {
     try {
@@ -35,16 +31,18 @@ export default function SignInScreen() {
       </View>
 
       <View className="gap-3">
-        {isFreeBuild ? (
-          // Free-Apple-ID build: no Sign in with Apple capability.
-          <Button onPress={() => signInOffline()}>
-            <AppText>Continue Offline</AppText>
-          </Button>
-        ) : available === false ? (
-          <AppText tone="secondary" className="text-center">
-            Sign in with Apple isn&apos;t available on this device.
-          </AppText>
-        ) : (
+        {available === false ? (
+          // Free builds and Expo Go without the Apple module: a local account
+          // instead. Workouts aren't tied to an account, so nothing is lost.
+          <>
+            <AppText tone="secondary" className="text-center">
+              Sign in with Apple isn&apos;t available here. Your workouts are saved on this phone.
+            </AppText>
+            <Button onPress={() => signInOffline()}>
+              <AppText>Continue Without Signing In</AppText>
+            </Button>
+          </>
+        ) : available ? (
           // Apple's own button: required styling for Sign in with Apple, drawn
           // natively. It takes explicit size via `style`, not className.
           <AppleAuthentication.AppleAuthenticationButton
@@ -54,10 +52,10 @@ export default function SignInScreen() {
             style={{ height: 50, width: '100%' }}
             onPress={handlePress}
           />
-        )}
+        ) : null}
         {/* Development only (stripped from release builds): lets you use the
           simulator when it isn't signed into an Apple ID. */}
-        {__DEV__ ? (
+        {__DEV__ && available !== false ? (
           <Button variant="plain" onPress={() => signInAsDeveloper()}>
             <AppText>Continue as Developer</AppText>
           </Button>

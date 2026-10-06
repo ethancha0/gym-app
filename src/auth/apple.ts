@@ -64,7 +64,10 @@ export async function signInAsDeveloper() {
   await saveSignIn({ appleUserId: DEV_USER_ID, email: null, fullName: 'Developer' });
 }
 
-/** Free builds only: a local account in place of Sign in with Apple. */
+/**
+ * A local account for when Sign in with Apple isn't available (free builds,
+ * Expo Go without the Apple module). See useAppleSignInAvailable.
+ */
 export async function signInOffline() {
   await saveSignIn({ appleUserId: OFFLINE_USER_ID, email: null, fullName: null });
 }

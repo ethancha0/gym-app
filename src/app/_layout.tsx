@@ -7,7 +7,7 @@ import { Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
-import { isFreeBuild, verifyAppleCredential } from '@/auth/apple';
+import { isLocalAccount, verifyAppleCredential } from '@/auth/apple';
 import { DatabaseGate } from '@/db/database-gate';
 import { currentUserQuery } from '@/db/repositories/users';
 import { navTheme, sheetOptions } from '@/theme/navigation';
@@ -35,7 +35,7 @@ function RootNavigator() {
 
   // Once per sign-in: sign out if the Apple ID revoked access to this app.
   useEffect(() => {
-    if (appleUserId && !isFreeBuild) verifyAppleCredential(appleUserId);
+    if (appleUserId && !isLocalAccount(appleUserId)) verifyAppleCredential(appleUserId);
   }, [appleUserId]);
 
   return (

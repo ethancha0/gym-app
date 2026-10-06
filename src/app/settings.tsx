@@ -2,7 +2,8 @@ import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { router } from 'expo-router';
 import { Alert } from 'react-native';
 
-import { isFreeBuild, isLocalAccount, signInWithApple, signOut } from '@/auth/apple';
+import { isLocalAccount, signInWithApple, signOut } from '@/auth/apple';
+import { useAppleSignInAvailable } from '@/auth/use-apple-sign-in-available';
 
 import { Screen } from '@/components/screen';
 import { GroupedList, ListRow } from '@/components/ui/grouped-list';
@@ -12,8 +13,10 @@ import { currentUserQuery } from '@/db/repositories/users';
 export default function SettingsScreen() {
   const { data } = useLiveQuery(currentUserQuery());
   const user = data[0];
-  // Signed in with the Developer (or offline) stand-in: offer the real thing.
-  const canUpgrade = !!user && isLocalAccount(user.appleUserId) && !isFreeBuild;
+  const appleAvailable = useAppleSignInAvailable();
+  const localAccount = !!user && isLocalAccount(user.appleUserId);
+  // Signed in with a stand-in account: offer the real thing where it works.
+  const canUpgrade = localAccount && appleAvailable === true;
 
   function confirmSignOut() {
     Alert.alert('Sign out?', 'Your workouts stay on this phone.', [
@@ -33,17 +36,15 @@ export default function SettingsScreen() {
     }
   }
 
-  const accountFooter = isFreeBuild
-    ? 'Offline account on this iPhone.'
-    : canUpgrade
-      ? 'Not signed in with Apple. Your workouts stay on this phone either way.'
-      : 'Signed in with Apple.';
+  const accountFooter = localAccount
+    ? 'Not signed in with Apple. Your workouts are saved on this phone.'
+    : 'Signed in with Apple.';
 
   return (
     <Screen>
       <GroupedList header="Account" footer={accountFooter}>
         <ListRow
-          title={user?.fullName ?? (isFreeBuild ? 'Offline' : 'Apple ID')}
+          title={user?.fullName ?? (localAccount ? 'This iPhone' : 'Apple ID')}
           subtitle={user?.email ?? undefined}
         />
         {canUpgrade ? <ListRow title="Sign in with Apple" onPress={upgradeToApple} /> : null}
